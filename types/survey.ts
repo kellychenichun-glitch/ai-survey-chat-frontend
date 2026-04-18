@@ -67,7 +67,7 @@ export interface SurveySettings {
   thankYouMessage?: string;
 }
 export interface Survey {
-  id?: string;
+  id?: string | number;
   title: string;
   description: string;
   status: 'draft' | 'published' | 'closed';
