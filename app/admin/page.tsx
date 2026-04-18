@@ -1,37 +1,70 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, FileText, Users, Plus, MessageSquare } from 'lucide-react'
+import { BarChart2, ClipboardList, Settings, Users, MessageSquare, BookOpen, Plus } from 'lucide-react'
+
 export default function AdminPage() {
   const [stats, setStats] = useState({ surveys: 0, published: 0, responses: 0 })
   useEffect(() => {
     const API = process.env.NEXT_PUBLIC_API_URL || 'https://ai-survey-api.onrender.com'
-    fetch(`${API}/api/v1/surveys/summary`).then(r=>r.json()).then(d=>{
-      const s = d.surveys || []
-      setStats({ surveys: s.length, published: s.filter((v:any)=>v.status==='published').length, responses: s.reduce((n:number,v:any)=>n+(v.responseCount||0),0) })
-    }).catch(()=>{})
+    fetch(API + '/api/v1/surveys/summary', { cache: 'no-store' })
+      .then(r=>r.json()).then(d=>{
+        const surveys = d.surveys || []
+        setStats({
+          surveys: surveys.length,
+          published: surveys.filter((s: any) => s.status === 'published').length,
+          responses: surveys.reduce((n: number, s: any) => n + (s.responseCount || 0), 0)
+        })
+      }).catch(()=>{})
   }, [])
+
+  const cards = [
+    { icon: ClipboardList, label: '問卷管理', href: '/admin/surveys', value: stats.surveys, sub: '個問卷', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { icon: BarChart2, label: '已發布', href: '/admin/surveys', value: stats.published, sub: '份已發布', color: 'text-green-600', bg: 'bg-green-50' },
+    { icon: Users, label: '累積回覆', href: '/admin/surveys', value: stats.responses, sub: '份回覆', color: 'text-purple-600', bg: 'bg-purple-50' },
+  ]
+
+  const quickLinks = [
+    { icon: Plus, label: '建立新問卷', href: '/admin/surveys/new', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { icon: ClipboardList, label: '問卷管理', href: '/admin/surveys', color: 'text-green-600', bg: 'bg-green-50' },
+    { icon: BookOpen, label: '知識庫', href: '/admin/knowledge', color: 'text-teal-600', bg: 'bg-teal-50' },
+    { icon: MessageSquare, label: 'AI 客服', href: '/admin/chat', color: 'text-orange-600', bg: 'bg-orange-50' },
+    { icon: BarChart2, label: '分析儀表板', href: '/admin/analytics', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { icon: Settings, label: '後台設定', href: '/admin/settings', color: 'text-gray-600', bg: 'bg-gray-100' },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm"><ArrowLeft className="h-4 w-4"/>返回首頁</Link>
-            <h1 className="text-xl font-bold text-gray-900">管理後台</h1>
-          </div>
-          <Link href="/admin/surveys/new" className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"><Plus className="h-4 w-4"/>建立新問卷</Link>
+      <header className="bg-white border-b shadow-sm">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900">管理後台</h1>
+          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700 transition">← 返回首頁</Link>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-5 shadow-sm border"><p className="text-sm text-gray-500">問卷總數</p><p className="text-3xl font-bold mt-1">{stats.surveys}</p></div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border"><p className="text-sm text-gray-500">已發布</p><p className="text-3xl font-bold mt-1">{stats.published}</p></div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border"><p className="text-sm text-gray-500">總填答數</p><p className="text-3xl font-bold mt-1">{stats.responses}</p></div>
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        <div className="grid grid-cols-3 gap-6">
+          {cards.map(item => (
+            <Link key={item.label} href={item.href} className="bg-white rounded-2xl border shadow-sm p-6 hover:shadow-md transition">
+              <div className={"w-12 h-12 " + item.bg + " rounded-xl flex items-center justify-center mb-4"}>
+                <item.icon className={"h-6 w-6 " + item.color}/>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{item.value}</p>
+              <p className="text-sm text-gray-500 mt-1">{item.label} · {item.sub}</p>
+            </Link>
+          ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/admin/surveys" className="bg-white rounded-xl p-6 shadow-sm border hover:border-gray-400 transition"><FileText className="h-8 w-8 text-blue-600 mb-3"/><h3 className="font-semibold">所有問卷</h3><p className="text-sm text-gray-500 mt-1">查看、編輯、發布問卷</p></Link>
-          <Link href="/admin/surveys/new" className="bg-white rounded-xl p-6 shadow-sm border hover:border-gray-400 transition"><Plus className="h-8 w-8 text-green-600 mb-3"/><h3 className="font-semibold">建立新問卷</h3><p className="text-sm text-gray-500 mt-1">AI 輔助或手動建立</p></Link>
-          <Link href="/chat" className="bg-white rounded-xl p-6 shadow-sm border hover:border-gray-400 transition"><MessageSquare className="h-8 w-8 text-purple-600 mb-3"/><h3 className="font-semibold">文字客服</h3><p className="text-sm text-gray-500 mt-1">查看對話記錄</p></Link>
+        <div className="bg-white rounded-2xl border shadow-sm p-6">
+          <h2 className="font-bold text-gray-900 text-lg mb-5">快速入口</h2>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+            {quickLinks.map(item => (
+              <Link key={item.label} href={item.href} className="flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition border border-transparent hover:border-gray-200">
+                <div className={"w-12 h-12 " + item.bg + " rounded-xl flex items-center justify-center"}>
+                  <item.icon className={"h-6 w-6 " + item.color}/>
+                </div>
+                <span className="text-xs font-medium text-gray-700 text-center">{item.label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </main>
     </div>
