@@ -14,33 +14,27 @@ export default function KnowledgePage() {
   const [newDesc, setNewDesc] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-
   const load = useCallback(async () => {
     setLoading(true)
     try { const res = await fetch(`${API}/api/v1/kb`); const d = await res.json(); setKbs(d.kbs || []) }
     catch (e: any) { setError(e.message) }
     setLoading(false)
   }, [])
-
   useEffect(() => { load() }, [load])
-
   const handleCreate = async () => {
-    if (!newName.trim()) return
-    setSaving(true)
+    if (!newName.trim()) return; setSaving(true)
     try {
-      const res = await fetch(`${API}/api/v1/kb`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newName.trim(), description: newDesc.trim() }) })
+      const res = await fetch(`${API}/api/v1/kb`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: newName.trim(), description: newDesc.trim() }) })
       const d = await res.json()
       if (d.kb) { setKbs(prev => [d.kb, ...prev]); setCreating(false); setNewName(''); setNewDesc('') }
     } catch (e: any) { setError(e.message) }
     setSaving(false)
   }
-
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`確定刪除「${name}」？`)) return
+    if (!confirm(`確定刪除「${name}」知識庫？`)) return
     try { await fetch(`${API}/api/v1/kb/${id}`, { method: 'DELETE' }); setKbs(prev => prev.filter(k => k.id !== id)) }
     catch (e: any) { setError(e.message) }
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b shadow-sm sticky top-0 z-10">
@@ -57,7 +51,7 @@ export default function KnowledgePage() {
         {creating && (
           <div className="bg-white rounded-xl border shadow-sm p-6 space-y-3">
             <h3 className="font-semibold text-gray-800">新增知識庫</h3>
-            <input value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleCreate()} placeholder="知識庫名稱（必填）" className="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="知識庫名稱（必填）" className="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
             <textarea value={newDesc} onChange={e=>setNewDesc(e.target.value)} placeholder="說明（選填）" rows={2} className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"/>
             <div className="flex gap-2">
               <button onClick={handleCreate} disabled={saving||!newName.trim()} className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"><Check className="h-4 w-4"/>{saving?'建立中...':'建立'}</button>
@@ -68,12 +62,7 @@ export default function KnowledgePage() {
         {loading ? (
           <div className="flex justify-center py-20"><RefreshCw className="h-8 w-8 animate-spin text-gray-300"/></div>
         ) : kbs.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <Database className="h-12 w-12 mx-auto mb-3 opacity-30"/>
-            <p className="text-lg font-medium">還沒有知識庫</p>
-            <p className="text-sm mt-1">建立知識庫讓 AI 客服有據可查</p>
-            <button onClick={() => setCreating(true)} className="mt-4 flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition mx-auto"><Plus className="h-4 w-4"/>建立第一個知識庫</button>
-          </div>
+          <div className="text-center py-20 text-gray-400"><Database className="h-12 w-12 mx-auto mb-3 opacity-30"/><p className="text-lg font-medium">還沒有知識庫</p><p className="text-sm mt-1">建立知識庫讓 AI 客服有據可查</p></div>
         ) : kbs.map(kb => (
           <div key={kb.id} className="bg-white rounded-xl border shadow-sm p-5 hover:shadow-md transition">
             <div className="flex items-start justify-between">
