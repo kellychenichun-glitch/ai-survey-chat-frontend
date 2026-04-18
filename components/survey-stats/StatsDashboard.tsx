@@ -58,7 +58,7 @@ function TextAnswers({ answers }: { answers:any[] }) {
   )
 }
 
-function TrendChart({ surveyId }: { surveyId: string | number }) {
+function TrendChart({ surveyId }: { surveyId: string | number | undefined }) {
   const [trend, setTrend] = useState<{date:string;count:number}[]>([])
   const [loading, setLoading] = useState(true)
   useEffect(()=>{
@@ -66,6 +66,7 @@ function TrendChart({ surveyId }: { surveyId: string | number }) {
       .then(r=>r.json()).then(d=>{ setTrend(d.trend||[]); setLoading(false) })
       .catch(()=>setLoading(false))
   },[surveyId])
+  if (!surveyId) return null
   if (loading) return <div className="h-32 flex items-center justify-center"><RefreshCw className="h-5 w-5 animate-spin text-gray-300"/></div>
   if (!trend.length) return <p className="text-sm text-gray-400 text-center py-6">近 30 天無回覆數據</p>
   const max = Math.max(...trend.map(t=>t.count), 1)
