@@ -92,11 +92,11 @@ function TrendChart({ surveyId }: { surveyId: string|number }) {
     <div>
       <div className="flex items-end gap-1 h-24">
         {trend.map((t,i) => (
-          <div key={i} className="flex-1 flex flex-col items-center group relative">
+          <div key={i} className="flex flex-col items-center group relative" style={{flex:'1 1 0',minWidth: trend.length===1 ? '60px' : '8px', maxWidth: trend.length===1 ? '120px' : undefined}}>
             <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-10">
               {t.date.slice(5)}: {t.count} 份
             </div>
-            <div className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition" style={{height:`${Math.max((t.count/max)*100, 4)}%`}}/>
+            <div className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition" style={{height:`${Math.max((t.count/max)*100, 8)}%`}}/>
           </div>
         ))}
       </div>
