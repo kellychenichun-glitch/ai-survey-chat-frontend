@@ -4,7 +4,7 @@ import { BarChart2, ClipboardList, Plus, MessageSquare, Users, CheckCircle } fro
 async function getStats() {
   try {
     const API = process.env.NEXT_PUBLIC_API_URL || 'https://ai-survey-api.onrender.com'
-    const res = await fetch(`${API}/api/v1/surveys/summary`, { next: { revalidate: 60 } })
+    const res = await fetch(`${API}/api/v1/surveys/summary`, { cache: 'no-store' })
     const data = await res.json()
     const surveys = data.surveys || []
     return { total: surveys.length, published: surveys.filter((s: any) => s.status === 'published').length, responses: surveys.reduce((n: number, s: any) => n + (s.responseCount || 0), 0) }
