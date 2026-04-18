@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Filter, BarChart2, Edit2, Trash2, Share2, Copy, Eye, CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react'
+import { Plus, Search, Filter, BarChart2, Edit2, Trash2, Share2, Copy, Eye, CheckCircle, Clock, XCircle, RefreshCw, List } from 'lucide-react'
 import { listSurveysSummary, closeSurvey, reopenSurvey, duplicateSurvey, type SurveySummary } from '@/lib/api/surveys-list'
 import { deleteSurvey, publishSurvey } from '@/lib/api/surveys'
 import ShareModal from './ShareModal'
@@ -104,6 +104,7 @@ export default function SurveyList() {
                       <Link href={`/survey/${sv.id}`} target="_blank" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"><Eye className="h-4 w-4"/></Link>
                       <button onClick={()=>setShareTarget(sv)} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"><Share2 className="h-4 w-4"/></button>
                       <Link href={`/admin/surveys/${sv.id}/stats`} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"><BarChart2 className="h-4 w-4"/></Link>
+                      <Link href={`/admin/surveys/${sv.id}/responses`} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100" title="查看回覆"><List className="h-4 w-4"/></Link>
                       <button onClick={()=>handleClose(sv.id)} className="flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200"><XCircle className="h-3.5 w-3.5"/>關閉</button>
                     </>}
                     {sv.status==='closed' && <button onClick={()=>handleReopen(sv.id)} className="flex items-center gap-1 text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700"><RefreshCw className="h-3.5 w-3.5"/>重開</button>}
