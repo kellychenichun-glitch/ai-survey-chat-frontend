@@ -71,10 +71,10 @@ export default function ResponsesPage({params}:{params:{id:string}}) {
       setLoading(true)
       try {
         const [sv,resp]=await Promise.all([
-          fetch(`${API}/api/v1/surveys/${params.id}/public`).then(r=>r.json()),
+          fetch(`${API}/api/v1/surveys/${params.id}`).then(r=>r.json()),
           fetch(`${API}/api/v1/surveys/${params.id}/responses`).then(r=>r.json()),
         ])
-        setSurvey(sv); setResponses(resp.responses||resp||[])
+        setSurvey(sv.survey||sv); setResponses(resp.responses||resp||[])
       }catch(e){console.error(e)}
       setLoading(false)
     }; load()
