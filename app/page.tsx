@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ChatWidget from '@/components/ChatWidget'
 import { BarChart2, ClipboardList, Plus, MessageSquare, Users, CheckCircle, X } from 'lucide-react'
 
 function ChatWidget() {
@@ -90,6 +91,8 @@ export default async function HomePage() {
       <footer className="text-center py-8 text-sm text-gray-400 border-t bg-white/50">AI Survey Chat · Powered by Claude · {new Date().getFullYear()}</footer>
     
       <ChatWidget />
+      <ChatWidget />
+
 </div>
   )
 }
