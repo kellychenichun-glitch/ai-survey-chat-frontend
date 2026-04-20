@@ -9,8 +9,8 @@ export default function AdminPage() {
     const API = process.env.NEXT_PUBLIC_API_URL || 'https://ai-survey-api.onrender.com'
     fetch(API + '/api/v1/surveys/summary', { cache: 'no-store' })
       .then(r=>r.json()).then(d=>{
-        const surveys = d.surveys || []
-        setStats({ surveys: surveys.length, published: surveys.filter((s: any) => s.status==='published').length, responses: surveys.reduce((n: number, s: any) => n+(s.responseCount||0), 0) })
+        const s = d.surveys || []
+        setStats({ surveys: s.length, published: s.filter((x: any) => x.status==='published').length, responses: s.reduce((n: number, x: any) => n+(x.responseCount||0), 0) })
       }).catch(()=>{})
   }, [])
 
@@ -52,13 +52,13 @@ export default function AdminPage() {
         </div>
         <div className="bg-white rounded-2xl border shadow-sm p-6">
           <h2 className="font-bold text-gray-900 text-lg mb-5">快速入口</h2>
-          <div className="grid grid-cols-4 md:grid-cols-7 gap-4">
+          <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
             {quickLinks.map(item => (
-              <Link key={item.label} href={item.href} className="flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition border border-transparent hover:border-gray-200">
-                <div className={"w-12 h-12 " + item.bg + " rounded-xl flex items-center justify-center"}>
-                  <item.icon className={"h-6 w-6 " + item.color}/>
+              <Link key={item.label} href={item.href} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition border border-transparent hover:border-gray-200">
+                <div className={"w-11 h-11 " + item.bg + " rounded-xl flex items-center justify-center"}>
+                  <item.icon className={"h-5 w-5 " + item.color}/>
                 </div>
-                <span className="text-xs font-medium text-gray-700 text-center">{item.label}</span>
+                <span className="text-xs font-medium text-gray-700 text-center leading-tight">{item.label}</span>
               </Link>
             ))}
           </div>
