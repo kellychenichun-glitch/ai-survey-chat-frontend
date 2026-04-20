@@ -1,5 +1,22 @@
 import Link from 'next/link'
-import { BarChart2, ClipboardList, Plus, MessageSquare, Users, CheckCircle } from 'lucide-react'
+import { BarChart2, ClipboardList, Plus, MessageSquare, Users, CheckCircle, X } from 'lucide-react'
+
+function ChatWidget() {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      {open && (
+        <div className="fixed bottom-24 right-6 z-50 shadow-2xl rounded-2xl overflow-hidden" style={{width:'380px',height:'560px'}}>
+          <iframe src="/chat" className="w-full h-full" style={{border:'none'}}/>
+        </div>
+      )}
+      <button onClick={()=>setOpen(!open)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110">
+        {open ? <X className="h-6 w-6"/> : <MessageSquare className="h-6 w-6"/>}
+      </button>
+    </>
+  )
+}
 
 async function getStats() {
   try {
@@ -71,6 +88,8 @@ export default async function HomePage() {
         </div>
       </main>
       <footer className="text-center py-8 text-sm text-gray-400 border-t bg-white/50">AI Survey Chat · Powered by Claude · {new Date().getFullYear()}</footer>
-    </div>
+    
+      <ChatWidget />
+</div>
   )
 }
