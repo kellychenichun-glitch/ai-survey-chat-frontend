@@ -1,103 +1,90 @@
-'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, Plus, ExternalLink, Ticket, RefreshCw } from 'lucide-react'
-const LINEAR_API = 'https://api.linear.app/graphql'
-const PRIORITY = ['','緊急','高','中','低']
-const P_COLOR = ['','text-red-600','text-orange-500','text-yellow-500','text-gray-400']
-interface Issue { id:string; title:string; state:{name:string;color:string}; priority:number; createdAt:string; url:string; assignee?:{name:string} }
+'use client';
+import { useEffect, useState } from 'react';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://ai-survey-api.onrender.com';
+
+interface Ticket {
+  id: number; title: string; description: string; status: string;
+  priority: string; created_at: string; linear_issue_id?: string;
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  open: 'bg-yellow-100 text-yellow-800',
+  in_progress: 'bg-blue-100 text-blue-800',
+  resolved: 'bg-green-100 text-green-800',
+  closed: 'bg-gray-100 text-gray-600',
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  low: 'bg-gray-100 text-gray-600',
+  medium: 'bg-yellow-100 text-yellow-800',
+  high: 'bg-orange-100 text-orange-800',
+  urgent: 'bg-red-100 text-red-800',
+};
+
 export default function TicketsPage() {
-  const [issues,setIssues] = useState<Issue[]>([])
-  const [loading,setLoading] = useState(false)
-  const [apiKey,setApiKey] = useState('')
-  const [teamId,setTeamId] = useState('')
-  const [configured,setConfigured] = useState(false)
-  const [creating,setCreating] = useState(false)
-  const [newTitle,setNewTitle] = useState('')
-  const [newDesc,setNewDesc] = useState('')
-  const [saving,setSaving] = useState(false)
-  const [error,setError] = useState('')
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const k = localStorage.getItem('linear_api_key')||''; const t = localStorage.getItem('linear_team_id')||''
-    if (k&&t) { setApiKey(k); setTeamId(t); setConfigured(true); load(k,t) }
-  }, [])
-  const load = async (k:string,t:string) => {
-    setLoading(true); setError('')
-    try {
-      const r = await fetch(LINEAR_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':k},body:JSON.stringify({query:`query{team(id:"${t}"){issues(first:30,orderBy:createdAt){nodes{id title state{name color} priority createdAt url assignee{name}}}}}`})})
-      const d = await r.json(); setIssues(d.data?.team?.issues?.nodes||[])
-    } catch(e:any){setError(e.message)}
-    setLoading(false)
-  }
-  const saveConfig = () => { localStorage.setItem('linear_api_key',apiKey); localStorage.setItem('linear_team_id',teamId); setConfigured(true); load(apiKey,teamId) }
-  const createIssue = async () => {
-    if (!newTitle.trim()) return; setSaving(true)
-    try {
-      const r = await fetch(LINEAR_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':apiKey},body:JSON.stringify({query:`mutation{issueCreate(input:{teamId:"${teamId}",title:${JSON.stringify(newTitle)},description:${JSON.stringify(newDesc)}}){success issue{id title state{name color} priority createdAt url}}}`})})
-      const d = await r.json()
-      if (d.data?.issueCreate?.success) { setIssues(p=>[d.data.issueCreate.issue,...p]); setCreating(false); setNewTitle(''); setNewDesc('') }
-    } catch(e:any){setError(e.message)}
-    setSaving(false)
-  }
-  if (!configured) return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b shadow-sm"><div className="max-w-3xl mx-auto px-4 h-16 flex items-center gap-4"><Link href="/admin" className="text-gray-400 hover:text-gray-600"><ArrowLeft className="h-5 w-5"/></Link><h1 className="font-semibold">工單管理（Linear）</h1></div></header>
-      <main className="max-w-3xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl border shadow-sm p-8 space-y-5">
-          <div><h2 className="font-bold text-lg mb-1">連接 Linear</h2><p className="text-sm text-gray-500">前往 <a href="https://linear.app/settings/api" target="_blank" className="text-blue-500 underline">linear.app/settings/api</a> 取得 API Key</p></div>
-          <div className="space-y-3">
-            <div><label className="text-sm font-medium text-gray-700 block mb-1">API Key</label><input value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="lin_api_..." className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
-            <div><label className="text-sm font-medium text-gray-700 block mb-1">Team ID</label><input value={teamId} onChange={e=>setTeamId(e.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
-          </div>
-          <button onClick={saveConfig} disabled={!apiKey||!teamId} className="w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50">連接 Linear</button>
-        </div>
-      </main>
-    </div>
-  )
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  const load = () => {
+    const url = filter === 'all' ? `${API}/api/tickets` : `${API}/api/tickets?status=${filter}`;
+    fetch(url).then(r => r.json())
+      .then(d => { setTickets(Array.isArray(d) ? d : d.tickets || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, [filter]);
+
+  const updateStatus = async (id: number, status: string) => {
+    await fetch(`${API}/api/tickets/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    load();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b shadow-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4"><Link href="/admin" className="text-gray-400 hover:text-gray-600"><ArrowLeft className="h-5 w-5"/></Link><div className="flex items-center gap-2"><Ticket className="h-5 w-5 text-purple-500"/><h1 className="font-semibold">工單管理</h1></div></div>
-          <div className="flex items-center gap-2">
-            <button onClick={()=>load(apiKey,teamId)} disabled={loading} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><RefreshCw className={`h-4 w-4 ${loading?'animate-spin':''}`}/></button>
-            <button onClick={()=>setCreating(true)} className="flex items-center gap-1.5 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700"><Plus className="h-4 w-4"/>新增工單</button>
-          </div>
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Support Tickets</h1>
+        <div className="flex gap-2">
+          {['all', 'open', 'in_progress', 'resolved'].map(s => (
+            <button key={s} onClick={() => setFilter(s)}
+              className={`px-3 py-1 rounded text-sm ${filter === s ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
+              {s === 'all' ? 'All' : s.replace('_', ' ')}
+            </button>
+          ))}
         </div>
-      </header>
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>}
-        {creating && (
-          <div className="bg-white rounded-xl border shadow-sm p-5 space-y-3">
-            <h3 className="font-semibold">新增工單</h3>
-            <input value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder="標題 *" className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-            <textarea value={newDesc} onChange={e=>setNewDesc(e.target.value)} placeholder="說明（選填）" rows={3} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"/>
-            <div className="flex gap-2">
-              <button onClick={createIssue} disabled={saving||!newTitle.trim()} className="flex items-center gap-1.5 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50">{saving?<RefreshCw className="h-4 w-4 animate-spin"/>:<Plus className="h-4 w-4"/>}{saving?'建立中...':'建立'}</button>
-              <button onClick={()=>setCreating(false)} className="border px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50">取消</button>
-            </div>
-          </div>
-        )}
-        {loading?<div className="flex justify-center py-20"><RefreshCw className="h-8 w-8 animate-spin text-gray-300"/></div>
-        :issues.length===0?<div className="text-center py-20 text-gray-400"><Ticket className="h-12 w-12 mx-auto mb-3 opacity-30"/><p className="text-lg font-medium">還沒有工單</p></div>
-        :issues.map(issue=>(
-          <div key={issue.id} className="bg-white rounded-xl border shadow-sm p-4 flex items-start gap-4 hover:shadow-md transition">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium text-gray-900 text-sm">{issue.title}</span>
-                <span className={`text-xs font-medium ${P_COLOR[issue.priority]}`}>{PRIORITY[issue.priority]}</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-gray-400">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{background:issue.state.color}}/>{issue.state.name}</span>
-                {issue.assignee&&<span>{issue.assignee.name}</span>}
-                <span>{new Date(issue.createdAt).toLocaleDateString('zh-TW')}</span>
+      </div>
+      {loading ? <p>Loading...</p> : tickets.length === 0 ? (
+        <p className="text-gray-500">No tickets found.</p>
+      ) : (
+        <div className="space-y-3">
+          {tickets.map(t => (
+            <div key={t.id} className="border rounded-lg p-4 hover:bg-gray-50">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[t.status] || 'bg-gray-100'}`}>{t.status}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${PRIORITY_COLORS[t.priority] || 'bg-gray-100'}`}>{t.priority}</span>
+                    {t.linear_issue_id && <span className="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-700">Linear</span>}
+                  </div>
+                  <h3 className="font-medium">{t.title}</h3>
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{t.description}</p>
+                  <p className="text-xs text-gray-400 mt-2">{new Date(t.created_at).toLocaleString()}</p>
+                </div>
+                <select value={t.status} onChange={e => updateStatus(t.id, e.target.value)}
+                  className="ml-4 border rounded px-2 py-1 text-sm">
+                  <option value="open">Open</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="closed">Closed</option>
+                </select>
               </div>
             </div>
-            <a href={issue.url} target="_blank" className="p-2 text-gray-300 hover:text-blue-500"><ExternalLink className="h-4 w-4"/></a>
-          </div>
-        ))}
-      </main>
+          ))}
+        </div>
+      )}
     </div>
-  )
+  );
 }
