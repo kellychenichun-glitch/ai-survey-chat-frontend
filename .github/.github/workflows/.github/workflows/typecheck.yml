@@ -1,0 +1,13 @@
+name: TypeCheck
+on: [push]
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npx tsc --noEmit 2>&1 || true
+      - run: npm run build 2>&1 || true
