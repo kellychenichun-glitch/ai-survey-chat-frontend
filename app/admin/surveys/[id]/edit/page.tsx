@@ -1,16 +1,32 @@
-import SurveyBuilder from '@/components/survey-builder/SurveyBuilder'
-import { notFound } from 'next/navigation'
-export const dynamic = 'force-dynamic'
-interface Props { params: { id: string } }
-async function getSurvey(id: string) {
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://ai-survey-api.onrender.com'
-  const res = await fetch(`${API}/api/v1/surveys/${id}`, { cache: 'no-store' })
-  if (!res.ok) return null
-  const data = await res.json()
-  return data.survey
-}
-export default async function EditPage({ params }: Props) {
-  const survey = await getSurvey(params.id)
-  if (!survey) notFound()
-  return <SurveyBuilder mode="edit" initialSurvey={survey} />
+'use client';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import SurveyBuilder from '@/components/survey-builder/SurveyBuilder';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://ai-survey-api.onrender.com';
+
+export default function EditSurveyPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const [survey, setSurvey] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API}/api/surveys/${id}`)
+      .then(r => r.json())
+      .then(d => { setSurvey(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [id]);
+
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (!survey) return <div className="p-6">Survey not found.</div>;
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={() => router.back()} className="text-sm text-blue-600 hover:underline">← Back</button>
+        <h1 className="text-2xl font-bold">Edit Survey</h1>
+      </div>
+      <SurveyBuilder initialSurvey={survey} onSave={() => router.push('/admin/surveys')} />
+    </div>
+  );
 }
